@@ -21,12 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
 import javax.inject.Inject;
-
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
@@ -239,7 +234,6 @@ public class MediaManager {
         return null;
     }
 
-    @Nullable
     public Song getSong() {
         if (MusicServiceConnectionUtils.serviceBinder != null && MusicServiceConnectionUtils.serviceBinder.getService() != null) {
             return MusicServiceConnectionUtils.serviceBinder.getService().getSong();
@@ -381,13 +375,6 @@ public class MediaManager {
             return MusicServiceConnectionUtils.serviceBinder.getService().getQueuePosition();
         }
         return 0;
-    }
-
-    public boolean getQueueReloading() {
-        if (MusicServiceConnectionUtils.serviceBinder != null && MusicServiceConnectionUtils.serviceBinder.getService() != null) {
-            return MusicServiceConnectionUtils.serviceBinder.getService().getQueueReloading();
-        }
-        return false;
     }
 
     public void removeFromQueue(@NonNull QueueItem queueItem) {

@@ -29,7 +29,6 @@ import com.simplecity.amp_library.playback.constants.PlayerHandler;
 import com.simplecity.amp_library.services.Equalizer;
 import com.simplecity.amp_library.ui.queue.QueueItem;
 import com.simplecity.amp_library.ui.queue.QueueItemKt;
-import com.simplecity.amp_library.utils.AnalyticsManager;
 import com.simplecity.amp_library.utils.DataManager;
 import com.simplecity.amp_library.utils.LogUtils;
 import com.simplecity.amp_library.utils.SettingsManager;
@@ -281,6 +280,7 @@ public class PlaybackManager {
 
     public void updateEqualizer() {
         equalizer.update();
+
     }
 
     void releaseWakelock() {
@@ -314,8 +314,6 @@ public class PlaybackManager {
     }
 
     private void openCurrentAndMaybeNext(boolean openNext) {
-        AnalyticsManager.dropBreadcrumb(TAG, "openCurrentAndMaybeNext()");
-
         if (queueManager.getCurrentPlaylist().isEmpty() || queueManager.queuePosition < 0 || queueManager.queuePosition >= queueManager.getCurrentPlaylist().size()) {
             return;
         }
@@ -332,7 +330,6 @@ public class PlaybackManager {
             if (openFailedCounter++ < 10 && queueManager.getCurrentPlaylist().size() > 1) {
                 final int pos = getNextPosition(false);
                 if (pos < 0) {
-                    AnalyticsManager.dropBreadcrumb(TAG, "pos < 0, scheduling delayed shutdown");
                     musicServiceCallbacks.scheduleDelayedShutdown();
                     if (isSupposedToBePlaying) {
                         isSupposedToBePlaying = false;
@@ -358,7 +355,6 @@ public class PlaybackManager {
         }
 
         if (shutdown) {
-            AnalyticsManager.dropBreadcrumb(TAG, "shutdown true. Scheduling delayed shutdown");
             musicServiceCallbacks.scheduleDelayedShutdown();
             if (isSupposedToBePlaying) {
                 isSupposedToBePlaying = false;
@@ -505,7 +501,7 @@ public class PlaybackManager {
 
         playerHandler.removeCallbacksAndMessages(null);
 
-        equalizer.release();
+        equalizer.releaseEffects();
         equalizer.closeEqualizerSessions(true, getAudioSessionId());
 
         // Quit the thread so that anything that gets posted won't run
@@ -580,7 +576,6 @@ public class PlaybackManager {
     }
 
     public void pause() {
-        AnalyticsManager.dropBreadcrumb(TAG, "pause() called");
         switch (playbackLocation) {
             case PlaybackLocation.LOCAL: {
                 playerHandler.removeMessages(PlayerHandler.FADE_UP);
@@ -602,7 +597,6 @@ public class PlaybackManager {
                     }
                     chromecastManager.castManager.pause();
                     playbackState = PlaybackState.PAUSED;
-                    AnalyticsManager.dropBreadcrumb(TAG, "pause() called.. remote playback. scheduling delayed shutdown");
                     musicServiceCallbacks.scheduleDelayedShutdown();
                     isSupposedToBePlaying = false;
                     notifyChange(InternalIntents.PLAY_STATE_CHANGED);
@@ -665,12 +659,9 @@ public class PlaybackManager {
     }
 
     public void next(boolean force) {
-        AnalyticsManager.dropBreadcrumb(TAG, "next() called");
-
         notifyChange(InternalIntents.TRACK_ENDING);
 
         if (queueManager.getCurrentPlaylist().size() == 0) {
-            AnalyticsManager.dropBreadcrumb(TAG, "playlist empty, scheduling shutdown");
             musicServiceCallbacks.scheduleDelayedShutdown();
             return;
         }
@@ -705,15 +696,12 @@ public class PlaybackManager {
      * @param notify whether we want to fire PLAY_STATE_CHANGED event
      */
     void setIsSupposedToBePlaying(boolean supposedToBePlaying, boolean notify) {
-        AnalyticsManager.dropBreadcrumb(TAG, "setIsSupposedToBePlaying() " + supposedToBePlaying + " notify: " + notify);
-
         if (isSupposedToBePlaying != supposedToBePlaying) {
             isSupposedToBePlaying = supposedToBePlaying;
 
             // Update lastPlayed time first and notify afterwards, as the notification listener method needs the up-to-date value
             // for the recentlyPlayed() method to work
             if (!isSupposedToBePlaying) {
-                AnalyticsManager.dropBreadcrumb(TAG, "not supposed to be playing.. scheduling delayed shutdown");
                 musicServiceCallbacks.scheduleDelayedShutdown();
                 lastPlayedTime = System.currentTimeMillis();
             }
@@ -768,13 +756,15 @@ public class PlaybackManager {
                         next(true);
                     }
                     player.start();
+
+
+
                     // Make sure we fade in, in case a previous fadein was stopped because of another focus loss
                     playerHandler.removeMessages(PlayerHandler.FADE_DOWN);
                     playerHandler.sendEmptyMessage(PlayerHandler.FADE_UP);
 
                     setIsSupposedToBePlaying(true, true);
 
-                    AnalyticsManager.dropBreadcrumb(TAG, "play() called.. local playback. Is supposed to be playing. Cancelling shutdown.");
                     musicServiceCallbacks.cancelShutdown();
                     musicServiceCallbacks.updateNotification();
                 } else if (queueManager.getCurrentPlaylist().size() == 0) {
@@ -800,7 +790,6 @@ public class PlaybackManager {
                     notifyChange(InternalIntents.PLAY_STATE_CHANGED);
                 }
 
-                AnalyticsManager.dropBreadcrumb(TAG, "play() called.. remote playback. Is supposed to be playing. Cancelling shutdown.");
                 musicServiceCallbacks.cancelShutdown();
                 musicServiceCallbacks.updateNotification();
 

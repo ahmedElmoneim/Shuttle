@@ -15,6 +15,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.TextView;
+
 import com.annimon.stream.Stream;
 import com.bumptech.glide.Glide;
 import com.crashlytics.android.Crashlytics;
@@ -44,7 +46,6 @@ import com.simplecity.amp_library.utils.SettingsManager;
 import com.simplecity.amp_library.utils.StringUtils;
 import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
-import hu.akarnokd.rxjava2.debug.RxJavaAssemblyTracking;
 import io.fabric.sdk.android.Fabric;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -102,6 +103,12 @@ public class ShuttleApplication extends Application {
         }
 
         instance = this;
+
+        if (BuildConfig.DEBUG) {
+            // Traceur.enableLogging();
+
+            // enableStrictMode();
+        }
 
         appComponent = initDagger(this);
 

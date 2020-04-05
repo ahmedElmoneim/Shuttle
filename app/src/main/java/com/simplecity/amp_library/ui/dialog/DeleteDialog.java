@@ -273,19 +273,15 @@ public class DeleteDialog extends DialogFragment implements SafManager.SafDialog
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribeOn(Schedulers.io())
                                 .subscribe(deletedSongs -> {
-                                    if (DeleteDialog.this.isAdded()) {
-                                        if (deletedSongs > 0) {
-                                            Toast.makeText(getContext(), getString(R.string.delete_songs_success_toast, deletedSongs), Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            Toast.makeText(getContext(), getString(R.string.delete_songs_failure_toast), Toast.LENGTH_SHORT).show();
-                                        }
-                                        dismiss();
-                                    }
-                                }, error -> {
-                                    LogUtils.logException(TAG, "Failed to delete songs", error);
-                                    if (DeleteDialog.this.isAdded()) {
+                                    if (deletedSongs > 0) {
+                                        Toast.makeText(getContext(), getString(R.string.delete_songs_success_toast, deletedSongs), Toast.LENGTH_SHORT).show();
+                                    } else {
                                         Toast.makeText(getContext(), getString(R.string.delete_songs_failure_toast), Toast.LENGTH_SHORT).show();
                                     }
+                                    dismiss();
+                                }, error -> {
+                                    LogUtils.logException(TAG, "Failed to delete songs", error);
+                                    Toast.makeText(getContext(), getString(R.string.delete_songs_failure_toast), Toast.LENGTH_SHORT).show();
                                 }));
                     }
                 }, error -> LogUtils.logException(TAG, "Failed to delete songs", error)));

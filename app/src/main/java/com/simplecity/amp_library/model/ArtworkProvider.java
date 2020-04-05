@@ -2,9 +2,12 @@ package com.simplecity.amp_library.model;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import com.simplecity.amp_library.http.itunes.ItunesResult;
+import com.simplecity.amp_library.http.lastfm.LastFmResult;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import retrofit2.Call;
 
 public interface ArtworkProvider {
 
@@ -12,14 +15,18 @@ public interface ArtworkProvider {
         int MEDIA_STORE = 0;
         int TAG = 1;
         int FOLDER = 2;
-        int REMOTE = 3;
+        int LAST_FM = 3;
+        int ITUNES = 4;
     }
 
     @NonNull
     String getArtworkKey();
 
     @Nullable
-    String getRemoteArtworkUrl();
+    Call<? extends LastFmResult> getLastFmArtwork();
+
+    @Nullable
+    Call<ItunesResult> getItunesArtwork();
 
     @Nullable
     InputStream getMediaStoreArtwork();

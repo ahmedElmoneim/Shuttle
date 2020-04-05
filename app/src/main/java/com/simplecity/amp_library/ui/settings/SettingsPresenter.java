@@ -287,7 +287,7 @@ public class SettingsPresenter extends PurchasePresenter<SettingsView> {
     public void downloadScrobblerClicked() {
         SettingsView settingsView = getView();
         if (settingsView != null) {
-            settingsView.launchDownloadScrobblerIntent(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.adam.aslfms")));
+            settingsView.launchDownloadScrobblerIntent(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.elmoniem.x8DMusicPlayer")));
         }
     }
 

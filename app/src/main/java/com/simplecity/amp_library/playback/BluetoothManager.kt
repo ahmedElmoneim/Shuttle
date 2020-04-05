@@ -18,6 +18,8 @@ class BluetoothManager(
 
     private var bluetoothReceiver: BroadcastReceiver? = null
 
+    private var bluetoothReceiverIsRegistered: Boolean = false
+
     private var a2dpReceiver: BroadcastReceiver? = null
 
     fun registerBluetoothReceiver(context: Context) {
@@ -74,10 +76,14 @@ class BluetoothManager(
         }
 
         context.registerReceiver(bluetoothReceiver, filter)
+        bluetoothReceiverIsRegistered = true
     }
 
     fun unregisterBluetoothReceiver(context: Context) {
-        context.unregisterReceiver(bluetoothReceiver)
+        if (bluetoothReceiverIsRegistered) {
+            context.unregisterReceiver(bluetoothReceiver)
+            bluetoothReceiverIsRegistered = false
+        }
     }
 
     fun registerA2dpServiceListener(context: Context) {

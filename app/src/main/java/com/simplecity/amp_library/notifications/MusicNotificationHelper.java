@@ -31,7 +31,6 @@ import com.simplecity.amp_library.utils.LogUtils;
 import com.simplecity.amp_library.utils.PlaceholderProvider;
 import com.simplecity.amp_library.utils.PlaylistUtils;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 import java.util.ConcurrentModificationException;
 
@@ -48,8 +47,6 @@ public class MusicNotificationHelper extends NotificationHelper {
     Bitmap bitmap;
 
     private Handler handler;
-
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     public MusicNotificationHelper(Context context) {
         super(context);
@@ -109,7 +106,7 @@ public class MusicNotificationHelper extends NotificationHelper {
         notification = getBuilder(context, song, mediaSessionToken, bitmap, isPlaying, isFavorite).build();
         notify(NOTIFICATION_ID, notification);
 
-        compositeDisposable.add(PlaylistUtils.isFavorite(song)
+        PlaylistUtils.isFavorite(song)
                 .first(false)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -119,7 +116,7 @@ public class MusicNotificationHelper extends NotificationHelper {
                     notify(notification);
                 }, error -> {
                     LogUtils.logException(TAG, "MusicNotificationHelper failed to present notification", error);
-                }));
+                });
 
         handler.post(() -> Glide.with(context)
                 .load(song)
@@ -154,17 +151,15 @@ public class MusicNotificationHelper extends NotificationHelper {
                 }));
     }
 
-    public boolean startForeground(Service service, @NonNull Song song, boolean isPlaying, @NonNull MediaSessionCompat.Token mediaSessionToken) {
+    public void startForeground(Service service, @NonNull Song song, boolean isPlaying, @NonNull MediaSessionCompat.Token mediaSessionToken) {
         notify(service, song, isPlaying, mediaSessionToken);
         try {
             AnalyticsManager.dropBreadcrumb(TAG, "startForeground() called");
             Log.w(TAG, "service.startForeground called");
             service.startForeground(NOTIFICATION_ID, notification);
-            return true;
         } catch (RuntimeException e) {
             Log.e(TAG, "startForeground not called, error: " + e);
             LogUtils.logException(TAG, "Error starting foreground notification", e);
-            return false;
         }
     }
 
@@ -174,9 +169,5 @@ public class MusicNotificationHelper extends NotificationHelper {
 
     public void cancel() {
         super.cancel(NOTIFICATION_ID);
-    }
-
-    public void tearDown() {
-        compositeDisposable.clear();
     }
 }

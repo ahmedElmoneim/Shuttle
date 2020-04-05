@@ -4,15 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-
 import com.annimon.stream.Optional;
 import com.simplecity.amp_library.model.Playlist;
 import com.simplecity.amp_library.playback.MusicService;
 import com.simplecity.amp_library.playback.constants.ShortcutCommands;
+import com.simplecity.amp_library.utils.AnalyticsManager;
 import com.simplecity.amp_library.utils.LogUtils;
 import com.simplecity.amp_library.utils.PlaylistUtils;
-import com.simplecity.amp_library.utils.ResumingServiceManager;
-
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
@@ -30,7 +28,8 @@ public class ShortcutTrampolineActivity extends AppCompatActivity {
             case ShortcutCommands.SHUFFLE_ALL:
                 Intent intent = new Intent(this, MusicService.class);
                 intent.setAction(action);
-                new ResumingServiceManager(getLifecycle()).startService(this, intent, null);
+                startService(intent);
+                AnalyticsManager.dropBreadcrumb(TAG, "Service started");
                 finish();
                 break;
             case ShortcutCommands.FOLDERS:

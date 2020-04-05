@@ -49,12 +49,6 @@ public class Equalizer {
         saveDefaults();
     }
 
-    public void release() {
-        releaseEffects();
-
-        context.unregisterReceiver(mAudioSessionReceiver);
-    }
-
     public void releaseEffects() {
         Stream.of(mAudioSessions.values())
                 .filter(effectSet -> effectSet != null)

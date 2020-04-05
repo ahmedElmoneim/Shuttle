@@ -1,5 +1,6 @@
 package com.simplecity.amp_library.http;
 
+import com.simplecity.amp_library.http.itunes.ItunesService;
 import com.simplecity.amp_library.http.lastfm.LastFmService;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
@@ -17,6 +18,8 @@ public class HttpClient {
     public OkHttpClient okHttpClient;
 
     public LastFmService lastFmService;
+
+    public ItunesService itunesService;
 
     public static final String TAG_ARTWORK = "artwork";
 
@@ -39,5 +42,12 @@ public class HttpClient {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         lastFmService = lastFmRestAdapter.create(LastFmService.class);
+
+        Retrofit itunesRestAdapter = new Retrofit.Builder()
+                .baseUrl(URL_ITUNES)
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        itunesService = itunesRestAdapter.create(ItunesService.class);
     }
 }

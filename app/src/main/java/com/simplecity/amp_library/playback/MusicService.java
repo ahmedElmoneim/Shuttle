@@ -93,8 +93,6 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     private PackageValidator mPackageValidator;
 
-    private DummyNotificationHelper dummyNotificationHelper = new DummyNotificationHelper();
-
     @SuppressLint("InlinedApi")
     @Override
     public void onCreate() {
@@ -143,7 +141,6 @@ public class MusicService extends MediaBrowserServiceCompat {
         this.shutdownIntent = PendingIntent.getService(this, 0, shutdownIntent, 0);
 
         // Listen for the idle state
-        AnalyticsManager.dropBreadcrumb(TAG, "onCreate(), scheduling delayed shutdown");
         scheduleDelayedShutdown();
 
         reloadQueue();
@@ -152,7 +149,8 @@ public class MusicService extends MediaBrowserServiceCompat {
     @Override
     public IBinder onBind(final Intent intent) {
 
-        AnalyticsManager.dropBreadcrumb(TAG, "onBind().. cancelShutdown()");
+        AnalyticsManager.dropBreadcrumb(TAG, "onBind()");
+
         cancelShutdown();
         serviceInUse = true;
 
@@ -195,7 +193,6 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     @Override
     public void onRebind(Intent intent) {
-        AnalyticsManager.dropBreadcrumb(TAG, "onRebind().. cancelShutdown()");
         cancelShutdown();
         serviceInUse = true;
     }
@@ -214,10 +211,6 @@ public class MusicService extends MediaBrowserServiceCompat {
             // If there is a playlist but playback is paused, then wait a while before stopping the service, so that pause/resume isn't slow.
             // Also delay stopping the service if we're transitioning between tracks.
         } else if (queueManager.playlist.size() > 0 || queueManager.shuffleList.size() > 0 || playbackManager.hasTrackEndedMessage()) {
-            AnalyticsManager.dropBreadcrumb(TAG, String.format("onUnbind() scheduling delayed shutdown. Playlist size: %d queue size: %d has track ended message: %s",
-                    queueManager.playlist.size(), queueManager.shuffleList.size(), playbackManager.hasTrackEndedMessage())
-            );
-
             scheduleDelayedShutdown();
             return true;
         }
@@ -280,9 +273,6 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         playbackManager.destroy();
 
-        dummyNotificationHelper.teardown(this);
-        notificationHelper.tearDown();
-
         disposables.clear();
 
         super.onDestroy();
@@ -300,10 +290,8 @@ public class MusicService extends MediaBrowserServiceCompat {
             AnalyticsManager.dropBreadcrumb(TAG, String.format("onStartCommand() Action: %s, Command: %s", action, cmd));
 
             if (MediaButtonCommand.NEXT.equals(cmd) || ServiceCommand.NEXT_ACTION.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 gotoNext(true);
             } else if (MediaButtonCommand.PREVIOUS.equals(cmd) || ServiceCommand.PREV_ACTION.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 if (getSeekPosition() < 2000) {
                     previous();
                 } else {
@@ -311,7 +299,6 @@ public class MusicService extends MediaBrowserServiceCompat {
                     play();
                 }
             } else if (MediaButtonCommand.TOGGLE_PAUSE.equals(cmd) || ServiceCommand.TOGGLE_PAUSE_ACTION.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 if (isPlaying()) {
                     AnalyticsManager.dropBreadcrumb(TAG, "Pausing due to media button or service command");
                     pause();
@@ -319,14 +306,11 @@ public class MusicService extends MediaBrowserServiceCompat {
                     play();
                 }
             } else if (MediaButtonCommand.PAUSE.equals(cmd) || ServiceCommand.PAUSE_ACTION.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 AnalyticsManager.dropBreadcrumb(TAG, "Pausing due to media button or service command (2)");
                 pause();
             } else if (MediaButtonCommand.PLAY.equals(cmd)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 play();
             } else if (ServiceCommand.STOP_ACTION.equals(action) || MediaButtonCommand.STOP.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 AnalyticsManager.dropBreadcrumb(TAG, "Pausing due to media button or service stop command");
                 pause();
                 releaseServiceUiAndStop();
@@ -334,16 +318,12 @@ public class MusicService extends MediaBrowserServiceCompat {
                 //For some reason, the notification will only fuck off if this call is delayed.
                 new Handler().postDelayed(() -> stopForegroundImpl(true, false), 150);
             } else if (ServiceCommand.SHUFFLE_ACTION.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 toggleShuffleMode();
             } else if (ServiceCommand.REPEAT_ACTION.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 toggleRepeat();
             } else if (MediaButtonCommand.TOGGLE_FAVORITE.equals(action) || ServiceCommand.TOGGLE_FAVORITE.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 toggleFavorite();
             } else if (ExternalIntents.PLAY_STATUS_REQUEST.equals(action)) {
-                dummyNotificationHelper.showDummyNotification(this);
                 notifyChange(ExternalIntents.PLAY_STATUS_RESPONSE);
             } else if (ServiceCommand.SHUTDOWN.equals(action)) {
                 shutdownScheduled = false;
@@ -354,11 +334,9 @@ public class MusicService extends MediaBrowserServiceCompat {
             if (action != null) {
                 switch (action) {
                     case ShortcutCommands.PLAY:
-                        dummyNotificationHelper.showDummyNotification(this);
                         play();
                         break;
                     case ShortcutCommands.SHUFFLE_ALL:
-                        dummyNotificationHelper.showDummyNotification(this);
                         queueManager.makeShuffleList();
                         playAutoShuffleList();
                         break;
@@ -367,8 +345,6 @@ public class MusicService extends MediaBrowserServiceCompat {
         }
 
         // Make sure the service will shut down on its own if it was  just started but not bound to and nothing is playing
-        AnalyticsManager.dropBreadcrumb(TAG, "onStartCommand() scheduling delayed shutdown");
-
         scheduleDelayedShutdown();
 
         if (intent != null && intent.getBooleanExtra(MediaButtonCommand.FROM_MEDIA_BUTTON, false)) {
@@ -495,7 +471,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     /**
      * Queues a new list for playback
      *
-     * @param songs  The list to queue
+     * @param songs The list to queue
      * @param action The action to take
      */
     public void enqueue(List<Song> songs, @QueueManager.EnqueueAction final int action) {
@@ -530,7 +506,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     /**
      * Opens a list of songs for playback
      *
-     * @param songs    The list of songs to open
+     * @param songs The list of songs to open
      * @param position The position to start playback at
      */
     public void open(@NonNull List<Song> songs, final int position) {
@@ -721,6 +697,9 @@ public class MusicService extends MediaBrowserServiceCompat {
         switch (getShuffleMode()) {
             case QueueManager.ShuffleMode.OFF:
                 setShuffleMode(QueueManager.ShuffleMode.ON);
+                notifyChange(InternalIntents.SHUFFLE_CHANGED);
+                queueManager.makeShuffleList();
+                notifyChange(InternalIntents.QUEUE_CHANGED);
                 if (getRepeatMode() == QueueManager.RepeatMode.ONE) {
                     setRepeatMode(QueueManager.RepeatMode.ALL);
                 }
@@ -786,12 +765,6 @@ public class MusicService extends MediaBrowserServiceCompat {
         }
     }
 
-    public boolean getQueueReloading() {
-        synchronized (this) {
-            return queueManager.queueReloading;
-        }
-    }
-
     /**
      * Starts playing the track at the given position in the queue.
      *
@@ -842,20 +815,11 @@ public class MusicService extends MediaBrowserServiceCompat {
     }
 
     private void scheduleDelayedShutdown() {
-        if (isPlaying() || serviceInUse || playbackManager.pausedByTransientLossOfFocus) {
-            AnalyticsManager.dropBreadcrumb(TAG,
-                    String.format("scheduleDelayedShutdown called.. returning early. isPlaying: %s service in use: %s paused by loss of focus: %s",
-                            isPlaying(), serviceInUse, playbackManager.pausedByTransientLossOfFocus));
-            return;
-        }
-
-        AnalyticsManager.dropBreadcrumb(TAG, "scheduleDelayedShutdown for 5 mins from now");
         alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 5 * 60 * 1000 /* 5 mins */, shutdownIntent);
         shutdownScheduled = true;
     }
 
     private void cancelShutdown() {
-        AnalyticsManager.dropBreadcrumb(TAG, "cancelShutdown() called. Shutdown scheduled: " + shutdownScheduled);
         if (shutdownScheduled) {
             alarmManager.cancel(shutdownIntent);
             shutdownScheduled = false;
@@ -919,9 +883,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             Song song = queueManager.getCurrentSong();
             if (song != null) {
                 Log.i(TAG, "startForeground called");
-                if (notificationHelper.startForeground(this, queueManager.getCurrentSong(), isPlaying(), playbackManager.getMediaSessionToken())) {
-                    dummyNotificationHelper.setForegroundedByApp(true);
-                }
+                notificationHelper.startForeground(this, queueManager.getCurrentSong(), isPlaying(), playbackManager.getMediaSessionToken());
             } else {
                 Log.e(TAG, "startForeground should have been called, but song is null");
             }
@@ -935,7 +897,7 @@ public class MusicService extends MediaBrowserServiceCompat {
      * Stops the foreground notification
      *
      * @param removeNotification true to remove the notification as well as stop the service running in the foreground
-     * @param withDelay          true to delay the stop call by 1.5 seconds, allowing subsequent start calls to cancel this call
+     * @param withDelay true to delay the stop call by 1.5 seconds, allowing subsequent start calls to cancel this call
      */
     void stopForegroundImpl(boolean removeNotification, boolean withDelay) {
         if (withDelay) {
@@ -943,7 +905,6 @@ public class MusicService extends MediaBrowserServiceCompat {
         } else {
             Log.i(TAG, "Stop foreground called");
             stopForeground(removeNotification);
-            dummyNotificationHelper.setForegroundedByApp(false);
         }
     }
 
