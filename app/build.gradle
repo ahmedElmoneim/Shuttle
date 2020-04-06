@@ -338,9 +338,9 @@ static String getPlayStoreTrack() {
     return track
 }
 
-play {
-    track = getPlayStoreTrack()
-    serviceAccountCredentials = file('../deployment_keys.json')
-}
+//play {
+//    track = getPlayStoreTrack()
+//    serviceAccountCredentials = file('../deployment_keys.json')
+//}
 
 apply plugin: Dependencies.BuildPlugins.playServices
