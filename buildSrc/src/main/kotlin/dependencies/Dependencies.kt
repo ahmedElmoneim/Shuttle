@@ -149,10 +149,11 @@ object Dependencies {
             const val rxBinding = "2.1.1"
             const val rxBindingAppCompat = "2.1.1"
             const val rxJava = "2.1.9"
+            const val rxJavaExtensions = "0.20.6"
             const val rxRelay = "2.0.0"
             const val rxBroadcast = "2.0.0"
             const val rxPrefs = "2.0.0"
-            const val traceur = "1.0.1"
+            const val rxKotlin = "2.3.0"
         }
 
         // RxJava - https://git.io/vihv0 (ReactiveX)
@@ -167,6 +168,9 @@ object Dependencies {
         // RxJava - https://git.io/rxjava (ReactiveX)
         const val rxJava = "io.reactivex.rxjava2:rxjava:${Versions.rxJava}"
 
+        // RX Java Extensions
+        const val rxJavaExtensions = "com.github.akarnokd:rxjava2-extensions:${Versions.rxJavaExtensions}"
+
         // RX Image Picker - https://git.io/vix5H (MLSDev )
         const val rxImagePicker = "com.github.timusus:RxImagePicker:permission-check-fix-SNAPSHOT"
 
@@ -179,7 +183,7 @@ object Dependencies {
         // Rx Prefs - https://github.com/f2prateek/rx-preferences
         const val rxPrefs = "com.f2prateek.rx.preferences2:rx-preferences:${Versions.rxPrefs}"
 
-        const val traceur = "com.tspoon.traceur:traceur:${Versions.traceur}"
+        const val rxKotlin = "io.reactivex.rxjava2:rxkotlin:${Versions.rxKotlin}"
     }
 
 
